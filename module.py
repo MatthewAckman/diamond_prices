@@ -2,6 +2,11 @@
 Various functions used in diamond price project
 """
 
+import numpy as np
+import pandas as pd
+
+from sklearn.model_selection import KFold
+
 
 def tt_tr_split(df, test_ratio = 0.25):
     """
@@ -26,43 +31,22 @@ def cross_validate(data, model, exog, endog, kfold=None):
     :param model: model
     :return: Mean absolute error (mae) and std of mae
     """
+
     if not kfold:
         kfold = KFold(n_splits=5, shuffle=True, random_state=1996)
 
     errors = []
 
     for tr, tt in kfold.split(data):
-        xtr, ytr = data.iloc[tr][exog], df.iloc[tr][endog]
-        xtt, ytt = data.iloc[tt][exog], df.iloc[tt][endog]
+        xtr, ytr = data.iloc[tr][exog], data.iloc[tr][endog]
+        xtt, ytt = data.iloc[tt][exog], data.iloc[tt][endog]
         model.fit(xtr, ytr)
 
-        errors += [abs(model.predict(xtt) - ytt)]
+        errors += [(model.predict(xtt) - ytt)**2]
 
-    mae = round(float(np.mean(errors)), 2)
+    mse = round(float(np.mean(errors)), 2)
 
     stdev_err = round(float(np.std(errors)), 2)
 
-    print(f'Cross-validation results: {mae = }, {stdev_err = }')
+    print(f'Cross-validation results: {mse = }, {stdev_err = }')
 
-
-def get_errors(data, model, exog, endog, kfold=None):
-    if not kfold:
-        kfold = KFold(n_splits=5, shuffle=True, random_state=1996)
-
-    cv_errors = pd.DataFrame()
-    tt_errors = pd.DataFrame()
-
-    data, test_data = tt_tr_split(data)
-
-    # yield cv errors
-    for tr, tt in kfold.split(data):
-        xtr, ytr = data.iloc[tr][exog], df.iloc[tr][endog]
-        xtt, ytt = data.iloc[tt][exog], df.iloc[tt][endog]
-        model.fit(xtr, ytr)
-
-        cv_errors = cv_errors.append(model.predict(xtt) - ytt)
-
-    # yield test errors
-    tt_errors = tt_errors.append(model.predict(test_data[exog]) - test_data[endog])
-
-    return cv_errors, tt_errors
