@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+tf_sandbox.ipynb
 
 # C extensions
 *.so
